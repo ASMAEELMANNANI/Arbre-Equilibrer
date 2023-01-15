@@ -1,0 +1,329 @@
+#include<iostream>
+#include<cstdio>
+#include<sstream>
+using namespace std;
+///La decalartion de Noeud
+struct Noeud
+{
+        int data; ///elemeent
+        struct Noeud *left;
+        struct Noeud *right;
+}*root;
+
+
+class Arbre
+{
+    public:
+        int height(Noeud *);///la taillede chaque Noeud : Nombre de fils gauche  et droit
+        int diff(Noeud *);/// calcul de la BF  balanec factor
+        Noeud *rr_rotation(Noeud *);///rotation droit droi : si la  racine a la balance factor de -2 et l et sous fils droit à le facteur de 1
+        Noeud *ll_rotation(Noeud *);/// rotation gauche  gauche : si la racine a  la balance factor  de 2 et son sous fils gauche a la balance 1
+        Noeud *lr_rotation(Noeud *);///rotation gauche droit :Si la racine a la balance factor de 2 et son sous arbre gauche BF=-1
+        Noeud *rl_rotation(Noeud *);///rotation droit gauche si la BF de la racine est -2 et sons sous arbre droit  BF =1
+        Noeud* balance(Noeud *);
+        Noeud* insert(Noeud *, int);///inserer un element
+        Noeud* remplacer(Noeud*,Noeud*);///permutation des deux neoud
+        Noeud*supprimer(Noeud*Arb,int val);///Supprimer un element depuis l'arbre
+        void display(Noeud *, int);///affichage 2D de l'arbre
+        void Affichage_infixe(Noeud *);///afichage infixe
+        int search(Noeud*,int);///chercher un element dans l'arbre
+        Arbre()///constructeur
+        {
+            root = NULL;
+        }
+};
+
+
+/// la taille de Noeud
+int Arbre::height(Noeud *temp)
+{
+    int h = 0;
+    if (temp != NULL)
+    {
+        int l_height = height(temp->left);
+        int r_height = height(temp->right);
+        int max_height = max(l_height, r_height);
+        h = max_height + 1;
+    }
+    return h;
+}
+
+///caclcule de  la balance factor(facteur d'equilibre)
+int Arbre::diff(Noeud *temp)
+{
+    int l_height = height(temp->left);
+    int r_height = height(temp->right);
+    ///BF=nombre de noeud de sous arbre gauche-nombre de noeud de sous arbre droit
+    int b_factor = l_height - r_height;
+    return b_factor;
+}
+
+///Rotation droit droit :si la  racine a la balance factor de -2 et l et sous fils droit à le facteur de 1: l'arbre est lourd a droit
+Noeud *Arbre::rr_rotation(Noeud *parent)
+{
+    Noeud *temp;
+    /// le fils droit devient la racine de la'arbre
+    temp = parent->right;
+    ///la racine precedente est devenu le fils gauche de la nouvelle racine
+    parent->right = temp->left;
+    temp->left = parent;
+    return temp;
+}
+
+///rotation gauche gauche :  rotation gauche  gauche : si la racine a  la balance factor  de 2 et son sous fils gauche a la balance :l'arbre est lourd a gauche
+Noeud *Arbre::ll_rotation(Noeud *parent)
+{
+    Noeud *temp;
+    ///le fils gauche devient la racine de larbre
+    temp = parent->left;
+    ///la racine precente devient le  fils droit de la nouvelle racine
+    parent->left = temp->right;
+    temp->right = parent;
+    return temp;
+}
+
+
+///rotation gauche droit :rotation gauche droit :Si la racine a la balance factor de 2 et son sous arbre gauche BF=-1
+Noeud *Arbre::lr_rotation(Noeud *parent)
+{
+    Noeud *temp;
+    ///le fils  gauche devient la racine
+    temp = parent->left;
+    ///rotation a droit
+    parent->left = rr_rotation(temp);
+    return ll_rotation(parent);
+}
+
+///rotation droit gauche : si la BF de la racine est -2 et sons sous arbre droit  BF =1
+ Noeud *Arbre::rl_rotation(Noeud *parent)
+{
+    Noeud *temp;
+    ///la fils droit devient la racine
+    temp = parent->right;
+    ///rotation a gauche
+    parent->right = ll_rotation(temp);
+    return rr_rotation(parent);
+}
+
+///equlibrer l'arbre selon le facteur d'equilibre
+Noeud *Arbre::balance(Noeud *temp)
+{
+    int bal_factor = diff(temp);
+    ///si BF est positive : soit rotation  gauche gauche soit gauche droit
+    if (bal_factor > 1)
+    {
+        if (diff(temp->left) > 0)
+            temp = ll_rotation(temp);//cas  1
+        else
+            temp = lr_rotation(temp);//cas 2
+    }
+     ///si BF est negative : soit rotation  droit droit soit  droit gauche
+    else if (bal_factor < -1)
+    {
+        if (diff(temp->right) > 0)
+            temp = rl_rotation(temp);//cas 1
+        else
+            temp = rr_rotation(temp);//cas 2
+    }
+    return temp;
+}
+
+
+
+///inserer un element avec la meme methode que arbre de recherche mais avec l'equlibrage
+Noeud *Arbre::insert(Noeud *root, int value)
+{
+    if (root == NULL)
+    {
+        root = new Noeud;
+        root->data = value;
+        root->left = NULL;
+        root->right = NULL;
+        return root;
+    }
+    else if (value < root->data)
+    {
+        root->left = insert(root->left, value);
+        root = balance(root);///equilibrer
+    }
+    else if (value > root->data)
+    {
+        root->right = insert(root->right, value);
+        root = balance(root);///equilibrer
+    }
+    return root;
+}
+
+Noeud*Arbre::remplacer(Noeud* B1,Noeud *B2)
+{
+    if(B2->left)///tester l'existance de fils gauche
+	    B2->left=remplacer(B1,B2->left);///remplicement de noeud
+    else
+    {
+	    B1->data=B2->data;
+        B2=B2->right;///le racine reçoit sont fils droit
+    }
+    return((Noeud*)B2);///retourner l'arbre aprés le remplacement
+}
+
+Noeud *Arbre::supprimer(Noeud*root,int val)
+{
+
+    if(!root) return(root);
+        /// si l'elemnt a supprimer se trouve au  sous-arbre gauche//
+        if(val< root->data)  {
+        	root->left=supprimer(root->left,val);
+		}
+        /// si l'elemnt a supprimer se trouve au sous-arbre droit//
+        else if(val > root->data)
+        {
+        	root->right=supprimer(root->right,val);
+        }
+        else
+            {
+             if (!root->right)   root=root->left;/// si l'arbre n'a pas un fils droit
+               else if(!root->left)   root=root->right;/// si l'rbre n'a pas un fils gauche
+               else root->right=remplacer(root,root->right);
+
+
+
+            }
+
+        return((Noeud*)root);
+}
+
+///affichage de l'arbre
+void Arbre::display(Noeud *ptr, int level)
+{
+    int i;
+    if (ptr != NULL)
+    {
+        display(ptr->right, level + 1);
+        printf("\n");
+        if (ptr == root)
+            cout << "Arbre -> ";
+        for (i = 0; i < level && ptr != root; i++)
+            cout << "        ";
+        cout << ptr->data;
+        display(ptr->left, level + 1);
+    }
+}
+
+///affichage infixe
+void Arbre::Affichage_infixe(Noeud *tree)
+{
+    if (tree == NULL)
+        return;
+    Affichage_infixe(tree->left);
+    cout << tree->data << "  ";
+    Affichage_infixe(tree->right);
+}
+
+
+
+
+///Chercher dans l'arbre :
+Arbre::search(Noeud*L,int elem)
+{
+    if(L!=NULL)
+   {
+    if(L->data==elem)
+    {
+        return 1;/// la valeur existe
+    }
+    if(elem<L->data)
+      return search(L->left,elem);
+    else
+       return search(L->right,elem);
+
+   }else
+   return 0; ///la valeur n'exist pas
+}
+
+
+
+
+ int main()
+{
+    int choice, item;
+    Arbre Arb;
+
+   /* for(int i=0;i<100000;i++)
+    {
+        root=Arb.insert(root,i);
+    }
+    Arb.display(root,1);*/
+    while (1)
+    {
+        cout << "\n---------------------" << endl;
+        cout << "Arbre de recherche equilibrer" << endl;
+        cout << "\n---------------------" << endl;
+        cout << "1.Inserer element dans l'arbre " << endl;
+        cout << "2.Afficher arbre"  << endl;
+        cout << "3.Affichage infixe de l'arbre " << endl;
+        cout << "4.Chercher un element  " << endl;
+        cout << "5.Supprimer un element  " << endl;
+        cout << "6.Exit" << endl;
+        cout << "Entrer votre choix : ";
+        cin >> choice;
+        switch (choice)
+        {
+            case 1:
+                cout << "Entrer une  valeur entier  : ";
+                cin >> item;
+                root = Arb.insert(root, item);
+                /*for(int i=0;i<10000;i++)
+                {
+                    root=Arb.insert(root,i);
+                }*/
+                break;
+            case 2:
+                if (root == NULL)
+                {
+                 cout << "Aucun element dans l'arbre " << endl;
+                    continue;
+                }
+                cout << "Votre Arbre :" << endl;
+                Arb.display(root, 1);
+                break;
+            case 3:
+                cout << "Affichage infixe :" << endl;
+                Arb.Affichage_infixe(root);
+                cout << endl;
+                break;
+            case 4:
+                int data;
+                cout << "Donner la valeur que vous cherchez  : " ;
+                cin>>data;
+                if( Arb.search(root,data))
+                    cout << "La valeur existe " << endl;
+                else
+                    cout << "! La valeur n'existe :" << endl;
+                break;
+            case 5:
+                 int sup;
+                 cout << "Donner la valeur que vous voulez supprimer   : " ;
+                 cin>>sup;
+                 Arb.supprimer(root,sup);
+                 ///equlibrer l'arbre apres la suppression
+                  if(Arb.diff(root)==2 && Arb.diff(root->left)==1){ root = Arb.ll_rotation(root); }
+                  else if(Arb.diff(root)==2 &&Arb.diff(root->left)==-1){ root =  Arb.lr_rotation(root); }
+                  else if(Arb.diff(root)==2 && Arb.diff(root->left)==0){ root = Arb.ll_rotation(root); }
+                  else if(Arb.diff(root)==-2 && Arb.diff(root->right)==-1){ root =Arb. rr_rotation(root); }
+                  else if(Arb.diff(root)==-2 && Arb.diff(root->right)==1){ root = Arb.rl_rotation(root); }
+                  else if(Arb.diff(root)==-2 && Arb.diff(root->right)==0){ root = Arb.ll_rotation(root); }
+                break;
+
+            case 6:
+                exit(1);
+                break;
+            default:
+                cout << "Choix invalid " << endl;
+        }
+        }
+    return 0;
+}
+
+
+
+
